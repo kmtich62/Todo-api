@@ -64,6 +64,35 @@ app.delete('/todos/:id', function(req, res){
 
         res.json(foundItem);
     }
+});
+
+//PUT /todos/:id
+app.put('/todos/:id', function(req, res){
+    var todoid = parseInt(req.params.id, 10);
+    var foundItem = _.findWhere(todos, {id: todoid});
+    var body = _.pick(req.body, 'description', 'completed');
+    var validAttributes = {};
+
+    if(!foundItem){
+        return res.status(404).send();
+    }
+
+    if(body.hasOwnProperty('completed') && _.isBoolean(body.completed)){
+        validAttributes.completed = body.completed;
+    } else if (body.hasOwnProperty('completed')){
+        //completed is not boolean
+        return res.status(400).send();
+    }
+
+    if(body.hasOwnProperty('description') && _.isString(body.completed) && body.completed.trim().length > 0){
+        validAttributes.description = body.description;
+    } else if (body.hasOwnProperty('description')){
+        return res.status(400).json({'error': 'description not formatted correctly'});
+    }
+
+    _.extend(foundItem, validAttributes);
+    res.json(foundItem);
+
 
 
 });
