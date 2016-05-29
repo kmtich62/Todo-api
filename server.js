@@ -10,15 +10,40 @@ var PORT = process.env.PORT || 3000;
 var todos=[];
 var todoNextId = 1;
 
+function stringToBoolean(value){
+    if(typeof value === 'undefined'){
+        return false;
+    }
+    value = value.trim().toLowerCase();
+
+    switch(value){
+        case 'true':
+        case 'yes':
+        case '1':
+            return true;
+        default: return false;
+    }
+}
+
 app.use(bodyParser.json());
 
 app.get('/', function(req, res){
     res.send('Todo API Root');
 });
 
-//GET / todos
+//GET / todos?completed=true
 app.get('/todos', function(req, res){
-    res.json(todos);
+    var  queryParams = req.query;
+    var filteredTodos = todos;
+    var isCompleted;
+
+    if(!_.isUndefined(queryParams)){
+        if(queryParams.hasOwnProperty('completed')){
+            isCompleted = stringToBoolean(queryParams.completed);
+            filteredTodos = _.where(filteredTodos, {completed: isCompleted});
+        }
+    }
+    res.json(filteredTodos);
 });
 
 //GET / todos/:id
@@ -100,3 +125,5 @@ app.put('/todos/:id', function(req, res){
 app.listen(PORT, function(){
     console.log('Express listening on port' + PORT + '!');
 });
+
+
