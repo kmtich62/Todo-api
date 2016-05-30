@@ -9,7 +9,7 @@ var db = require('./db.js');
 var app = express();
 var PORT = process.env.PORT || 3000;
 var todos=[];
-var todoNextId = 1;
+// var todoNextId = 1;
 
 function stringToBoolean(value){
     if(typeof value === 'undefined'){
@@ -32,27 +32,24 @@ app.get('/', function(req, res){
     res.send('Todo API Root');
 });
 
-//GET / todos?completed=true
+//GET / todos?completed=true&q='x'
 app.get('/todos', function(req, res){
     var  queryParams = req.query;
-    var filteredTodos = todos;
-    var isCompleted;
+    var where = {};
 
-    if(!_.isUndefined(queryParams)){
-        if(queryParams.hasOwnProperty('completed')){
-            isCompleted = stringToBoolean(queryParams.completed);
-            filteredTodos = _.where(filteredTodos, {completed: isCompleted});
-        }
+    if(queryParams.hasOwnProperty('completed')) {
+        where.completed = stringToBoolean(queryParams.completed);
     }
 
     if(queryParams.hasOwnProperty('q') && queryParams.q.trim().length > 0){
-        var filter = queryParams.q.toLowerCase();
-        filteredTodos = _.filter(filteredTodos, function(todo){
-            return todo.description.toLowerCase().indexOf(filter) >=0;
-        })
+        where.description = {$like: '%' + queryParams.q.toLowerCase() + '%'};
     }
 
-    res.json(filteredTodos);
+    db.todo.findAll({where: where}).then(function(todos){
+        res.json(todos);
+    }, function(e){
+        res.status(500).send({'Sever Error': 'An error occured on the database server'})
+    });
 });
 
 //GET / todos/:id
@@ -68,16 +65,6 @@ app.get('/todos/:id', function(req, res){
     }, function(e){
         res.status(500).json(e);
     });
-
-
-    // var foundItem;
-    //
-    // foundItem = _.findWhere(todos, {id: todoid});
-    // if(foundItem){
-    //     res.json(foundItem);
-    // } else {
-    //     res.status(404).send();
-    // }
 });
 
 //POST /todos
