@@ -29,7 +29,7 @@ function stringToBoolean(value){
 app.use(bodyParser.json());
 
 app.get('/', function(req, res){
-    res.send('Todo API Root');
+    res.send('TEsting Todo API Root');
 });
 
 //GET / todos?completed=true&q='x'
