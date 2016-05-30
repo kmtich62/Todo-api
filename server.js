@@ -120,9 +120,6 @@ app.put('/todos/:id', function(req, res){
 
     _.extend(foundItem, validAttributes);
     res.json(foundItem);
-
-
-
 });
 
 db.sequelize.sync().then(function(){
