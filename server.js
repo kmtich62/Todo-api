@@ -29,7 +29,8 @@ function stringToBoolean(value){
 app.use(bodyParser.json());
 
 app.get('/', function(req, res){
-    res.send('TEsting Todo API Root');
+    //res.send('TEsting Todo API Root');
+    res.redirect('/todos');
 });
 
 //GET / todos?completed=true&q='x'
@@ -101,29 +102,31 @@ app.delete('/todos/:id', function(req, res){
 app.put('/todos/:id', function(req, res){
     var body = _.pick(req.body, 'description', 'completed');
     var todoid = parseInt(req.params.id, 10);
-    var foundItem = _.findWhere(todos, {id: todoid});
 
-    var validAttributes = {};
-
-    if(!foundItem){
-        return res.status(404).send();
+    var attributes = {};
+    if(body.hasOwnProperty('completed')){
+        attributes.completed = body.completed;
+    }
+    if(body.hasOwnProperty('description')){
+        attributes.description = body.description;
     }
 
-    if(body.hasOwnProperty('completed') && _.isBoolean(body.completed)){
-        validAttributes.completed = body.completed;
-    } else if (body.hasOwnProperty('completed')){
-        //completed is not boolean
-        return res.status(400).send();
-    }
 
-    if(body.hasOwnProperty('description') && _.isString(body.completed) && body.completed.trim().length > 0){
-        validAttributes.description = body.description;
-    } else if (body.hasOwnProperty('description')){
-        return res.status(400).json({'error': 'description not formatted correctly'});
-    }
 
-    _.extend(foundItem, validAttributes);
-    res.json(foundItem);
+    db.todo.findById(todoid).then(function(foundItem){
+        if(foundItem){
+            return foundItem.update(attributes);
+        } else {
+            res.status(404).send({"error": "No Item found with that id"})
+        }
+    }, function(){
+        res.status(500).send();
+    }).then(function(foundItem){
+        res.json(foundItem.toJSON());
+    }, function(e){
+        res.status(400).json(e);
+    });
+
 });
 
 db.sequelize.sync().then(function(){
