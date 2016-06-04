@@ -115,18 +115,17 @@ app.put('/todos/:id', function(req, res){
 
     db.todo.findById(todoid).then(function(foundItem){
         if(foundItem){
-            return foundItem.update(attributes);
+            foundItem.update(attributes).then(function(foundItem){
+                res.json(foundItem.toJSON());
+            }, function(e){
+                res.status(400).json(e);
+            });
         } else {
             res.status(404).send({"error": "No Item found with that id"})
         }
     }, function(){
         res.status(500).send();
-    }).then(function(foundItem){
-        res.json(foundItem.toJSON());
-    }, function(e){
-        res.status(400).json(e);
     });
-
 });
 
 db.sequelize.sync().then(function(){
