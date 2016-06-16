@@ -37,7 +37,7 @@ app.get('/', function(req, res){
 });
 
 //GET / todos?completed=true&q='x'
-app.get('/todos', function(req, res){
+app.get('/todos', middleware.requireAuthentication,function(req, res){
     var  queryParams = req.query;
     var where = {};
 
@@ -57,7 +57,7 @@ app.get('/todos', function(req, res){
 });
 
 //GET / todos/:id
-app.get('/todos/:id', function(req, res){
+app.get('/todos/:id', middleware.requireAuthentication, function(req, res){
     var todoid = parseInt(req.params.id, 10);
 
     db.todo.findById(todoid).then(function(todo){
@@ -72,7 +72,7 @@ app.get('/todos/:id', function(req, res){
 });
 
 //POST /todos
-app.post('/todos', function(req, res){
+app.post('/todos', middleware.requireAuthentication, function(req, res){
     var body = _.pick(req.body, 'description', 'completed');
 
     db.todo.create(body).then(function(todo){
@@ -83,7 +83,7 @@ app.post('/todos', function(req, res){
 });
 
 //DELETE /todos/:id
-app.delete('/todos/:id', function(req, res){
+app.delete('/todos/:id', middleware.requireAuthentication, function(req, res){
     var todoid = parseInt(req.params.id, 10);
 
     db.todo.destroy({
@@ -102,7 +102,7 @@ app.delete('/todos/:id', function(req, res){
 });
 
 //PUT /todos/:id
-app.put('/todos/:id', function(req, res){
+app.put('/todos/:id', middleware.requireAuthentication, function(req, res){
     var body = _.pick(req.body, 'description', 'completed');
     var todoid = parseInt(req.params.id, 10);
 
