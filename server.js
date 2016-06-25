@@ -39,7 +39,9 @@ app.get('/', function(req, res){
 //GET / todos?completed=true&q='x'
 app.get('/todos', middleware.requireAuthentication,function(req, res){
     var  queryParams = req.query;
-    var where = {};
+    var where = {
+        userId: req.user.get('id')
+    };//req.user.get('id')
 
     if(queryParams.hasOwnProperty('completed')) {
         where.completed = stringToBoolean(queryParams.completed);
@@ -60,16 +62,34 @@ app.get('/todos', middleware.requireAuthentication,function(req, res){
 app.get('/todos/:id', middleware.requireAuthentication, function(req, res){
     var todoid = parseInt(req.params.id, 10);
 
-    db.todo.findById(todoid).then(function(todo){
-        if(!!todo){
+    var where = {
+        userId: req.user.get('id'),
+        id: todoid
+    };
+
+    db.todo.findOne({where: where}).then(function(todo) {
+        if (!!todo) {
             res.json(todo.toJSON());
         } else {
-            res.status(404).send({"error": "No Item found with that id"});
+            res.status(404).send({"error": "No item found with that id"});
         }
-    }, function(e){
+    }, function(e) {
         res.status(500).json(e);
     });
+
 });
+
+    // //change this to findone where id == passed in id and userid == req.user.get('id')
+    // db.todo.findById(todoid).then(function(todo){
+    //     if(!!todo){
+    //         res.json(todo.toJSON());
+    //     } else {
+    //         res.status(404).send({"error": "No Item found with that id"});
+    //     }
+    // }, function(e){
+    //     res.status(500).json(e);
+    // });
+// });
 
 //POST /todos
 app.post('/todos', middleware.requireAuthentication, function(req, res){
@@ -93,7 +113,8 @@ app.delete('/todos/:id', middleware.requireAuthentication, function(req, res){
 
     db.todo.destroy({
         where:{
-            id: todoid
+            id: todoid,
+            userId: req.user.get('id')// make sure userid = req.user.get('id')
         }
     }).then(function(rowDeleted){
         if(rowDeleted === 1) {
@@ -119,9 +140,13 @@ app.put('/todos/:id', middleware.requireAuthentication, function(req, res){
         attributes.description = body.description;
     }
 
+    //where statement for the following findOne method
+    var where = {
+        userId: req.user.get('id'),
+        id: todoid
+    };
 
-
-    db.todo.findById(todoid).then(function(foundItem){
+    db.todo.findOne({where: where}).then(function(foundItem){
         if(foundItem){
             foundItem.update(attributes).then(function(foundItem){
                 res.json(foundItem.toJSON());
