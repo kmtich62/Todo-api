@@ -79,18 +79,6 @@ app.get('/todos/:id', middleware.requireAuthentication, function(req, res){
 
 });
 
-    // //change this to findone where id == passed in id and userid == req.user.get('id')
-    // db.todo.findById(todoid).then(function(todo){
-    //     if(!!todo){
-    //         res.json(todo.toJSON());
-    //     } else {
-    //         res.status(404).send({"error": "No Item found with that id"});
-    //     }
-    // }, function(e){
-    //     res.status(500).json(e);
-    // });
-// });
-
 //POST /todos
 app.post('/todos', middleware.requireAuthentication, function(req, res){
     var body = _.pick(req.body, 'description', 'completed');
@@ -175,21 +163,30 @@ app.post('/users', function(req, res){
 //POST: /users/login
 app.post('/users/login', function(req, res){
     var body = _.pick(req.body, 'email', 'password');
+    var userInstance;
 
-    db.user.authenticate(body).then(function(user){
+    db.user.authenticate(body).then(function(user) {
         var token = user.generateToken('authentication');
-
-        if(token){
-            res.header('Auth', token).json(user.toPublicJSON());
-        } else{
-            res.status(401).send();
-        }
-
-        //res.header('Auth', user.generateToken('authentication')).json(user.toPublicJSON());
-    }, function(){
+        userInstance = user;
+        //save token to database
+        return db.token.create({
+            token: token
+        });
+    }).then(function(tokenInstance){
+        res.header('Auth', tokenInstance.get('token')).json(userInstance.toPublicJSON);
+    }).catch(function(){
         res.status(401).send();
     });
 
+});
+
+//DELETE: /users/login
+app.delete('/users/login', middleware.requireAuthentication, function(req, res){
+    req.token.destroy().then(function(){
+        res.status(204).send();
+    }).catch(function(){
+        res.status(500).send();
+    });
 });
 
 //{force:true}
